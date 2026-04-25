@@ -43,6 +43,24 @@ def send_message(recipient_id: str, message_text: str):
     else:
         print(f"❌ Xabar yuborishda xatolik: {response.text}")
 
+def reply_to_comment(comment_id: str, message_text: str):
+    """ Postdagi izohga (kommentga) ommaviy javob qaytarish """
+    url = f"https://graph.instagram.com/v25.0/{comment_id}/replies"
+    headers = {
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "message": message_text
+    }
+    response = requests.post(url, json=payload, headers=headers)
+    if response.status_code == 200:
+        print(f"✅ Izohga javob yozildi: {message_text}")
+    else:
+        print(f"❌ Izohga javob yozishda xatolik: {response.text}")
+
+
+
 
 @app.post("/webhook")
 async def handle_webhook(request: Request):
@@ -56,6 +74,8 @@ async def handle_webhook(request: Request):
         # Xabarlarni tahlil qilish
         if body.get("object") == "instagram":
             for entry in body.get("entry", []):
+                
+                # 1. Direct xabarlarni (DM) o'qish
                 for webhook_event in entry.get("messaging", []):
                     if "message" in webhook_event:
                         sender_id = webhook_event["sender"]["id"]
@@ -67,9 +87,28 @@ async def handle_webhook(request: Request):
                         
                         print(f"📨 Yangi xabar: {message_text} (Kimdan: {sender_id})")
                         
-                        # BIZNING AVTOMATIK JAVOBIMIZ
+                        # BIZNING AVTOMATIK JAVOBIMIZ (DIRECTGA)
                         reply_text = f"Salom! Sizning '{message_text}' degan xabaringizni oldim. Men hozircha botman 😊"
                         send_message(sender_id, reply_text)
+
+                # 2. Kommentariyalarni (Izohlarni) o'qish
+                for change in entry.get("changes", []):
+                    if change.get("field") == "comments":
+                        comment_value = change.get("value", {})
+                        comment_id = comment_value.get("id")
+                        comment_text = comment_value.get("text", "")
+                        from_id = comment_value.get("from", {}).get("id", "")
+                        username = comment_value.get("from", {}).get("username", "Foydalanuvchi")
+                        
+                        # Bot yoki akkaunt egasi o'zi yozgan izohga tsikl bo'lib qayta javob yozmasligi uchun
+                        if str(from_id) == str(entry.get("id")):
+                            continue
+                        
+                        print(f"💬 Yangi kommentariya: {comment_text} (Kimdan: {username})")
+                        
+                        # BIZNING AVTOMATIK JAVOBIMIZ (POST TAGIGA OCHIQ JAVOB)
+                        reply_text = f"@{username}, izohingiz uchun rahmat! Bu avtomatik javob 🤖"
+                        reply_to_comment(comment_id, reply_text)
                         
         return Response(content="EVENT_RECEIVED", status_code=200)
     except Exception as e:
