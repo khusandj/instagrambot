@@ -28,7 +28,7 @@ async def verify_webhook(request: Request):
 
 def send_message(recipient_id: str, message_text: str):
     """ Foydalanuvchiga Instagram orqali javob xabarini yuborish """
-    url = "https://graph.facebook.com/v19.0/me/messages"
+    url = "https://graph.instagram.com/v25.0/me/messages"
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json"
