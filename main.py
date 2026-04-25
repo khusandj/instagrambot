@@ -33,8 +33,8 @@ GEMINI_API_KEY = "AIzaSyDHV76hHRxbV2LzBtpbCvb3u-hOW_FPD0Y"
 
 if GEMINI_API_KEY and GEMINI_API_KEY != "SHU_YERGA_API_KALITNI_QOYASIZ":
     genai.configure(api_key=GEMINI_API_KEY)
-    # Pullik hisob bo'lgani uchun eng zo'r Pro modeliga o'tkazildi
-    model = genai.GenerativeModel('gemini-1.5-pro-latest')
+    # 404 xato bermaydigan, hamma kalitda ishlaydigan Universal Pro modelga o'tkazildi
+    model = genai.GenerativeModel('gemini-pro')
 else:
     model = None
 
@@ -67,7 +67,8 @@ def get_ai_reply(text: str, is_comment: bool = False) -> str:
         return response.text.strip()
     except Exception as e:
         print(f"Gemini xatoligi: {e}")
-        return "Uzr, hozir tizimda biroz uzilish bor. Iltimos keyinroq yozing 😊"
+        # XATOLIKNI ANIQ KO'RISH UCHUN INSTAGRAMGA JUVOB QILIB YUBORAMIZ
+        return f"XATOLIK: {e}"
 # ------------------------------------------------------
 
 def send_message(recipient_id: str, message_text: str):
