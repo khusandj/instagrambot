@@ -2,6 +2,7 @@ import os
 import requests
 from fastapi import FastAPI, Request, Response
 import uvicorn
+import google.generativeai as genai
 
 app = FastAPI()
 
@@ -25,6 +26,34 @@ async def verify_webhook(request: Request):
         return PlainTextResponse(content=str(challenge), status_code=200)
     else:
         return Response(status_code=403)
+
+# ----------------- GEMINI SOZLAMALARI -----------------
+# PASTGA O'ZINGIZNING GEMINI API KALITINGIZNI YOZING:
+GEMINI_API_KEY = "AIzaSyDHV76hHRxbV2LzBtpbCvb3u-hOW_FPD0Y"
+
+if GEMINI_API_KEY and GEMINI_API_KEY != "SHU_YERGA_API_KALITNI_QOYASIZ":
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+else:
+    model = None
+
+def get_ai_reply(text: str, is_comment: bool = False) -> str:
+    """ Foydalanuvchi xabariga Gemini orqali javob olish """
+    if not model:
+        return "Bot tayyor, lekin Gemini API kaliti kiritilmagan! (Iltimos kodga kalitni qo'ying)"
+    
+    try:
+        if is_comment:
+            prompt = f"Sen juda samimiy, quvnoq va aqlli Instagram yordamchisisan. Foydalanuvchi sening postingga shunday izoh (komment) qoldirdi: '{text}'. Unga o'zbek tilida juda qisqa (1-2 gap), samimiy va chiroyli javob qaytar."
+        else:
+            prompt = f"Sen do'stona va aqlli yordamchisan. Foydalanuvchi senga shunday xabar yozdi: '{text}'. Unga o'zbek tilida aniq, foydali va chiroyli javob qaytar."
+            
+        response = model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        print(f"Gemini xatoligi: {e}")
+        return "Uzr, hozir tizimda biroz uzilish bor. Iltimos keyinroq yozing 😊"
+# ------------------------------------------------------
 
 def send_message(recipient_id: str, message_text: str):
     """ Foydalanuvchiga Instagram orqali javob xabarini yuborish """
@@ -87,9 +116,9 @@ async def handle_webhook(request: Request):
                         
                         print(f"📨 Yangi xabar: {message_text} (Kimdan: {sender_id})")
                         
-                        # BIZNING AVTOMATIK JAVOBIMIZ (DIRECTGA)
-                        reply_text = f"Salom! Sizning '{message_text}' degan xabaringizni oldim. Men hozircha botman 😊"
-                        send_message(sender_id, reply_text)
+                        # GEMINI ORQALI AVTOMATIK JAVOB (DIRECTGA)
+                        ai_reply = get_ai_reply(message_text, is_comment=False)
+                        send_message(sender_id, ai_reply)
 
                 # 2. Kommentariyalarni (Izohlarni) o'qish
                 for change in entry.get("changes", []):
@@ -106,8 +135,9 @@ async def handle_webhook(request: Request):
                         
                         print(f"💬 Yangi kommentariya: {comment_text} (Kimdan: {username})")
                         
-                        # BIZNING AVTOMATIK JAVOBIMIZ (POST TAGIGA OCHIQ JAVOB)
-                        reply_text = f"@{username}, izohingiz uchun rahmat! Bu avtomatik javob 🤖"
+                        # GEMINI ORQALI AVTOMATIK JAVOB (POST TAGIGA OCHIQ JAVOB)
+                        ai_reply = get_ai_reply(comment_text, is_comment=True)
+                        reply_text = f"@{username}, {ai_reply}"
                         reply_to_comment(comment_id, reply_text)
                         
         return Response(content="EVENT_RECEIVED", status_code=200)
