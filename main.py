@@ -29,12 +29,15 @@ async def verify_webhook(request: Request):
 
 # ----------------- GEMINI SOZLAMALARI -----------------
 # PASTGA O'ZINGIZNING GEMINI API KALITINGIZNI YOZING:
-GEMINI_API_KEY = "AIzaSyDHV76hHRxbV2LzBtpbCvb3u-hOW_FPD0Y"
+# DIQQAT: KALITNI BU YERGA YOZMANG! GITHUBGA CHIQIB KETSA GOOGLE BLOKLAYDI.
+# KALITNI RENDER.COM SAYTIDAGI "ENVIRONMENT VARIABLES" BO'LIMIGA KIRITAMIZ!
+import os
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-if GEMINI_API_KEY and GEMINI_API_KEY != "SHU_YERGA_API_KALITNI_QOYASIZ":
+if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    # 404 xato bermaydigan, hamma kalitda ishlaydigan Universal Pro modelga o'tkazildi
-    model = genai.GenerativeModel('gemini-pro')
+    # Ushbu kalitda 100% kafolatli ishlaydigan model
+    model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     model = None
 
