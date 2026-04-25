@@ -29,11 +29,12 @@ async def verify_webhook(request: Request):
 
 # ----------------- GEMINI SOZLAMALARI -----------------
 # PASTGA O'ZINGIZNING GEMINI API KALITINGIZNI YOZING:
-GEMINI_API_KEY = "AIzaSyDHV76hHRxbV2LzBtpbCvb3u-hOW_FPD0Y"
+GEMINI_API_KEY = "AIzaSyDesbdtatg21Blx4VxG1HqzURfLaCU2e-0"
 
-if GEMINI_API_KEY and GEMINI_API_KEY != "AIzaSyDHV76hHRxbV2LzBtpbCvb3u-hOW_FPD0Y":
+if GEMINI_API_KEY and GEMINI_API_KEY != "SHU_YERGA_API_KALITNI_QOYASIZ":
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    # Eng kuchli Pro modelga o'tkazildi (gemini-1.5-pro)
+    model = genai.GenerativeModel('gemini-1.5-pro')
 else:
     model = None
 
