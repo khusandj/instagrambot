@@ -31,12 +31,26 @@ async def verify_webhook(request: Request):
 # PASTGA O'ZINGIZNING GEMINI API KALITINGIZNI YOZING:
 GEMINI_API_KEY = "AIzaSyDHV76hHRxbV2LzBtpbCvb3u-hOW_FPD0Y"
 
-if GEMINI_API_KEY and GEMINI_API_KEY != "SHU_YERGA_API_KALITNI_QOYASIZ":
+if GEMINI_API_KEY and GEMINI_API_KEY != "AIzaSyDHV76hHRxbV2LzBtpbCvb3u-hOW_FPD0Y":
     genai.configure(api_key=GEMINI_API_KEY)
     model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     model = None
 
+# ======================================================
+# BOTNING MIYASI (SHU YERNI O'Z BIZNESINGIZGA MOSLAB O'ZGARTIRASIZ)
+# ======================================================
+BOT_QOIDALARI = """
+Sen AI Artist va vizual kontent kreatori Xusan Djemilovning shaxsiy blogida kuzatuvchilarga javob beruvchi xushmuomala yordamchisan.
+Sening vazifang - kelgan xabarlarga samimiy, do'stona va xuddi inson yozgandek tabiiy javob berish.
+
+Asosiy qoidalar:
+1. Har doim o'zbek tilida chiroyli va xatosiz yoz.
+2. Kuzatuvchi salom bersa, alik ol va: "Khusan AI artis shaxsiy blogiga xush kelibsiz! Sizga qanday yordam bera olaman?" deb so'ra.
+3. Agar foydalanuvchi sun'iy intellekt (Seedance, Kling va hokazo), promtlar yozish sirlari, dizayn xizmatlari narxi yoki hamkorlik haqida so'rasa: batafsil yoz bilganingcha tushunarli qilib Suniy intelektni o'rganmoqchiman desa "Qiziqishingiz uchun rahmat! Xabaringizni Xusanga AI artist yetkazdim, u hozir biroz bandroq, lekin tez orada sizga o'zi batafsil javob yozadi. Ungacha blogdagi AI ijod namunalari bilan tanishib turing!" deb javob ber.
+4. Javoblaring juda qisqa, lo'nda va samimiy bo'lsin. Ortiqcha rasmiyatchilikka berilma.
+5. Smayliklardan (😊, ✌️, ✨, 🎨) me'yorida foydalan.
+"""
 def get_ai_reply(text: str, is_comment: bool = False) -> str:
     """ Foydalanuvchi xabariga Gemini orqali javob olish """
     if not model:
@@ -44,9 +58,9 @@ def get_ai_reply(text: str, is_comment: bool = False) -> str:
     
     try:
         if is_comment:
-            prompt = f"Sen juda samimiy, quvnoq va aqlli Instagram yordamchisisan. Foydalanuvchi sening postingga shunday izoh (komment) qoldirdi: '{text}'. Unga o'zbek tilida juda qisqa (1-2 gap), samimiy va chiroyli javob qaytar."
+            prompt = f"{BOT_QOIDALARI}\n\nVAZIFA: Foydalanuvchi sening postingga shunday izoh (kommentariya) qoldirdi: '{text}'. Unga o'zbek tilida juda qisqa (maksimum 1 ta gap) va chiroyli javob qaytar."
         else:
-            prompt = f"Sen do'stona va aqlli yordamchisan. Foydalanuvchi senga shunday xabar yozdi: '{text}'. Unga o'zbek tilida aniq, foydali va chiroyli javob qaytar."
+            prompt = f"{BOT_QOIDALARI}\n\nVAZIFA: Mijoz senga direct'da shunday xabar yozdi: '{text}'. Unga yuqoridagi qoidalarga to'liq amal qilgan holda javob qaytar."
             
         response = model.generate_content(prompt)
         return response.text.strip()
