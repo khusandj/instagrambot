@@ -37,7 +37,7 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
     # Ushbu kalitda 100% kafolatli ishlaydigan model
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-pro')
 else:
     model = None
 
@@ -70,8 +70,8 @@ def get_ai_reply(text: str, is_comment: bool = False) -> str:
         return response.text.strip()
     except Exception as e:
         print(f"Gemini xatoligi: {e}")
-        # XATOLIKNI ANIQ KO'RISH UCHUN INSTAGRAMGA JUVOB QILIB YUBORAMIZ
-        return f"XATOLIK: {e}"
+        # Xatolik bo'lsa hech narsa yubormaymiz, aks holda siklga tushib qoladi
+        return ""
 # ------------------------------------------------------
 
 def send_message(recipient_id: str, message_text: str):
@@ -130,14 +130,15 @@ async def handle_webhook(request: Request):
                         message_text = webhook_event["message"].get("text", "")
                         
                         # O'zimiz (bot) yozgan xabarga tsikl bo'lib qaytarmaslik uchun
-                        if webhook_event["message"].get("is_echo"):
+                        if webhook_event["message"].get("is_echo") or str(sender_id) == str(entry.get("id")):
                             continue
                         
                         print(f"📨 Yangi xabar: {message_text} (Kimdan: {sender_id})")
                         
                         # GEMINI ORQALI AVTOMATIK JAVOB (DIRECTGA)
                         ai_reply = get_ai_reply(message_text, is_comment=False)
-                        send_message(sender_id, ai_reply)
+                        if ai_reply:
+                            send_message(sender_id, ai_reply)
 
                 # 2. Kommentariyalarni (Izohlarni) o'qish
                 for change in entry.get("changes", []):
@@ -156,8 +157,9 @@ async def handle_webhook(request: Request):
                         
                         # GEMINI ORQALI AVTOMATIK JAVOB (POST TAGIGA OCHIQ JAVOB)
                         ai_reply = get_ai_reply(comment_text, is_comment=True)
-                        reply_text = f"@{username}, {ai_reply}"
-                        reply_to_comment(comment_id, reply_text)
+                        if ai_reply:
+                            reply_text = f"@{username}, {ai_reply}"
+                            reply_to_comment(comment_id, reply_text)
                         
         return Response(content="EVENT_RECEIVED", status_code=200)
     except Exception as e:
